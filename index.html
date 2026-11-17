@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<!-- Surface unfolding visualizer / Візуалізатор розгорток замкнених поверхонь — version 1.0.0 — single self-contained HTML file, no dependencies -->
+<html lang="uk"><head><meta charset="utf-8">
+<meta name="version" content="1.0.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Візуалізатор розгорток поверхонь</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--bd:#ccc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1e;--fg:#eee;--bd:#444}}
+:root[data-theme="dark"]{--bg:#1c1c1e;--fg:#eee;--bd:#444}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;display:flex;flex-direction:column}
+#bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--bd)}
+#bar label{display:flex;align-items:center;gap:5px;white-space:nowrap}
+#bar input[type=range]{width:90px}#code{width:300px}#ex{width:44px}
+button,select,input{font:inherit}
+#w{flex:1;min-height:0;padding:6px}
+svg{width:100%;height:100%;background:#fff;border:1px solid var(--bd);border-radius:6px;touch-action:none}
+</style></head><body>
+<div id="bar">
+<label>🌐 <select id="lg"><option value="uk">Українська</option><option value="en">English</option></select></label>
+<label><span data-u="Код" data-e="Code">Код</span> <input id="code" value="1 3 2 0 1 5 0 2 3 4 5 4 00 +-+-+"></label>
+<label><span data-u="Додатк. сторін" data-e="Extra sides">Додатк. сторін</span> <input id="ex" type="number" min="0" max="12" value="4"></label>
+<label><span data-u="Сторона" data-e="Side">Сторона</span> <input id="L" type="range" min="20" max="200" value="60"></label>
+<label><span data-u="Відстань" data-e="Distance">Відстань</span> <input id="d" type="range" min="1" max="4" step="0.1" value="2"></label>
+<label><span data-u="Дотична" data-e="Tangent">Дотична</span> <input id="T" type="range" min="0" max="1.5" step="0.05" value="0.4"></label>
+<label><span data-u="Товщина" data-e="Thickness">Товщина</span> <input id="sw" type="range" min="0.5" max="8" step="0.5" value="2"></label>
+<label><span data-u="Крива" data-e="Curve">Крива</span> <input id="col" type="color" value="#000000"></label>
+<label><span data-u="Штрих" data-e="Dash">Штрих</span> <select id="da"><option value="" data-u="суцільний" data-e="solid">суцільний</option><option value="8 5" data-u="пунктир" data-e="dashed">пунктир</option><option value="2 4" data-u="крапки" data-e="dotted">крапки</option></select></label>
+<label><input id="lab" type="checkbox" checked> <span data-u="номери" data-e="numbers">номери</span></label><label><span data-u="Шрифт" data-e="Font">Шрифт</span> <input id="fs" type="range" min="8" max="80" value="13"></label>
+<b data-u="Склеїти:" data-e="Glue:">Склеїти:</b><span id="ch" style="display:flex;gap:6px"></span><select id="mode"><option value="seq" data-u="по черзі" data-e="one by one">по черзі</option><option value="all" data-u="разом" data-e="all at once">разом</option></select><button id="pl">▶</button><input id="tt" type="range" min="0" max="1" step="0.001" value="0" style="width:140px"><label><span data-u="Фігури" data-e="Fill">Фігури</span> <input id="pc" type="color" value="#f1efe8"></label><label><span data-u="Закруглення" data-e="Rounding">Закруглення</span> <input id="rr" type="range" min="0" max="30" value="12"></label><button id="bl" data-u="Розташувати" data-e="Arrange">Розташувати</button><button id="bf" data-u="Вписати" data-e="Fit">Вписати</button><label><span data-u="Сепаратриси" data-e="Separatrices">Сепаратриси</span> <select id="dh"><option value="1" data-u="штрихові" data-e="dashed">штрихові</option><option value="0" data-u="суцільні" data-e="solid">суцільні</option></select></label><b data-u="Операція:" data-e="Operation:">Операція:</b><select id="op"><option value="slide" data-u="ковзання" data-e="slide">ковзання</option><option value="c01" data-u="0-1 скорочення" data-e="0-1 cancellation">0-1 скорочення</option><option value="c12" data-u="1-2 скорочення" data-e="1-2 cancellation">1-2 скорочення</option><option value="b01" data-u="0-1 народження" data-e="0-1 birth">0-1 народження</option><option value="b12" data-u="1-2 народження" data-e="1-2 birth">1-2 народження</option></select><select id="sh"></select><select id="sd"><option value="L">← L</option><option value="R">R →</option></select><button id="sp">▶</button><input id="sl" type="range" min="0" max="1" step="0.001" value="0" style="width:110px"><button id="sa" title="Застосувати / Apply">✓</button><button id="at" data-u="Атом" data-e="Atom">Атом</button><button id="hd" data-u="Розклад на ручки" data-e="Handle decomposition">Розклад на ручки</button><button id="fl">Потік Морса</button><span style="opacity:.55">v1.0.0</span><button id="bs">SVG</button>
+</div>
+<div id="w"><svg id="s" viewBox="-300 -300 600 600"></svg></div>
+<script>
+const $=id=>document.getElementById(id),svg=$('s'),PI=Math.PI;
+let P=[],E=[],drag=null;
+const rad=p=>+$('L').value/(2*Math.sin(PI/p.m));
+function parse(){
+  let txt=$('code').value.trim(),sg='';
+  const mm=txt.match(/(^|\s)00(\s|$)/); // після 00 — знаки стрічок: + (без перекрутки), - (перекручена)
+  if(mm){sg=txt.slice(mm.index+mm[0].length).replace(/[−–]/g,'-').replace(/[^+-]/g,'');txt=txt.slice(0,mm.index);}
+  const W=[[]];
+  for(const x of txt.split(/\s+/).filter(Boolean).map(Number)){
+    if(x===0)W.push([]);else if(!isNaN(x))W[W.length-1].push(x);
+  }
+  const ex=+$('ex').value;
+  P=W.filter(w=>w.length).map(w=>({w,m:Math.max(3,2*w.length+ex),c:[0,0],rot:0,pos:w.map((_,i)=>2*i)}));
+  TW={};[...new Set(W.flat())].filter(n=>n).sort((a,b)=>a-b).forEach((n,i)=>{if(sg[i]==='-')TW[n]=1;});
+  const occ={};E=[];
+  P.forEach(p=>p.w.forEach((n,i)=>{
+    const o=occ[n]=occ[n]||[];o.push({p,s:p.pos[i],i});
+    if(o.length%2===0)E.push({a:o[o.length-2],b:o[o.length-1],n,off:[0,0],ka:2*n,kb:2*n+1});
+  }));
+  const cnt={}; // висота слова: безпосередньо перед його найменшою півстрічкою (nA<nB), півстрічки впорядковані 1A<1B<2A<2B<…
+  P.forEach(p=>{p.key=Math.min(...p.w.map(n=>{const h=cnt[n]||0;cnt[n]=h+1;return 2*n+h%2;}))-.5;});
+  if(KEEP)applyKeep();else layout();
+  chips();
+}
+let LG='uk';
+const tr=(u,e)=>LG==='en'?e:u;
+function flLabel(){$('fl').textContent=FL==2?tr('Обернений потік','Reversed flow'):tr('Потік Морса','Morse flow');}
+function setLang(l){
+  LG=l;document.documentElement.lang=l;
+  document.querySelectorAll('[data-u]').forEach(el=>{el.textContent=l==='en'?el.dataset.e:el.dataset.u;});
+  document.title=tr('Візуалізатор розгорток поверхонь','Surface unfolding visualizer');
+  flLabel();
+}
+function setPos(p,pos){ // розташування чисел слова на сторонах багатокутника; оновлює кінці ребер
+  p.pos=pos;
+  E.forEach(e=>{if(e.a.p===p)e.a.s=pos[e.a.i];if(e.b.p===p)e.b.s=pos[e.b.i];});
+}
+function patterns(k,ex){ // способи розподілити вільні сторони між числами (проміжок між сусідніми числами ≥ 2)
+  const out=[],seen={};
+  for(let t=1;t<=Math.min(k,Math.max(1,ex));t++)for(let o=0;o<k;o++){
+    const g=Array(k).fill(2),ids=[...new Set(Array.from({length:t},(_,i)=>(o+Math.round(i*k/t))%k))];
+    for(let r=0,q=0;r<ex;r++,q=(q+1)%ids.length)g[ids[q]]++;
+    const key=g.join(',');if(!seen[key]){seen[key]=1;out.push(g);}
+  }
+  return out;
+}
+// штраф: перетини кривих, проходження крізь чужі багатокутники, числа на зовнішньому боці (вільні сторони мають бути зверху)
+function costLayout(){
+  const pl=E.map(e=>polyOf(curve(e),12)),N=P.length;let c=0;
+  for(let i=0;i<E.length;i++){
+    for(let j=i+1;j<E.length;j++)c+=10*(crossN(pl[i][0],pl[j])+crossN(pl[i][1],pl[j]));
+    pl[i].forEach((h,hi)=>h.forEach((v,k)=>{
+      if(hi===0&&k<3||hi===1&&k>h.length-4)return; // біля власних кінців крива виходить із багатокутника
+      if(P.some(q=>Math.hypot(v[0]-q.c[0],v[1]-q.c[1])<rad(q)*.9))c+=2;
+    }));
+  }
+  P.forEach((p,i)=>{
+    const f=2*PI*i/N;
+    c+=.5*p.pos.reduce((s,ps)=>s+(1+Math.cos(p.rot+2*PI*ps/p.m-f))/2,0)/p.pos.length;
+  });
+  return c;
+}
+function optRot(ms){ // для кожного багатокутника підбираємо розподіл чисел і поворот (крок 15°) за мінімумом штрафу
+  const base=P.map(p=>p.rot),N=24,t0=performance.now();
+  for(let pass=0;pass<2;pass++)P.forEach((p,i)=>{
+    let best=costLayout(),bp=p.pos,br=p.rot;
+    for(const g of patterns(p.w.length,p.m-2*p.w.length)){
+      const pos=[0];for(let j=1;j<g.length;j++)pos.push(pos[j-1]+g[j-1]);
+      setPos(p,pos);
+      for(let k=0;k<N;k++){
+        if(performance.now()-t0>ms)break;
+        p.rot=base[i]+2*PI*k/N;const c=costLayout();
+        if(c<best-1e-9){best=c;bp=pos;br=p.rot;}
+      }
+    }
+    setPos(p,bp);p.rot=br;
+  });
+}
+function layout(ms=300){
+  const N=P.length,d=+$('d').value;
+  if(!N)return;
+  const rmax=Math.max(...P.map(rad)),R=N>1?d*2*rmax/(2*Math.sin(PI/N)):0;
+  P.forEach((p,i)=>{
+    const f=2*PI*i/N,k=p.w.length;
+    setPos(p,p.w.map((_,j)=>2*j));
+    p.c=[R*Math.cos(f),-R*Math.sin(f)];
+    p.rot=f+PI-(k-1)*2*PI/p.m; // числа симетрично навпроти зовнішнього напряму
+  });
+  E.forEach(e=>e.off=[0,0]);
+  optRot(ms);
+  fit();
+}
+function sp(p,s){
+  const a=p.rot+2*PI*s/p.m,r=rad(p)*Math.cos(PI/p.m);
+  return{x:p.c[0]+r*Math.cos(a),y:p.c[1]-r*Math.sin(a),nx:Math.cos(a),ny:-Math.sin(a)};
+}
+const bez=(q,t)=>{const u=1-t;return[0,1].map(i=>u*u*u*q[0][i]+3*u*u*t*q[1][i]+3*u*t*t*q[2][i]+t*t*t*q[3][i]);};
+const bzd=(q,t)=>{const u=1-t;return[0,1].map(i=>3*(u*u*(q[1][i]-q[0][i])+2*u*t*(q[2][i]-q[1][i])+t*t*(q[3][i]-q[2][i])));};
+const q2=v=>v[0].toFixed(1)+' '+v[1].toFixed(1);
+function curveBase(e){
+  const A=sp(e.a.p,e.a.s),B=sp(e.b.p,e.b.s),T=+$('T').value,loop=e.a.p===e.b.p,L=+$('L').value;
+  let m0,c1,c2,u,h,piv=null;
+  if(!loop){
+    const D=Math.hypot(B.x-A.x,B.y-A.y),t=T*D,P1=[A.x+t*A.nx,A.y+t*A.ny],P2=[B.x+t*B.nx,B.y+t*B.ny];
+    m0=[(A.x+3*P1[0]+3*P2[0]+B.x)/8,(A.y+3*P1[1]+3*P2[1]+B.y)/8];
+    u=[B.x+P2[0]-P1[0]-A.x,B.y+P2[1]-P1[1]-A.y];
+    const c=[(A.x+2*P1[0]+P2[0])/4,(A.y+2*P1[1]+P2[1])/4];
+    h=Math.hypot(c[0]-m0[0],c[1]-m0[1]);
+    c1=[A.x+t/2*A.nx,A.y+t/2*A.ny];c2=[B.x+t/2*B.nx,B.y+t/2*B.ny];
+    piv=P.find(q=>Math.hypot(m0[0]-q.c[0],m0[1]-q.c[1])<rad(q)+L/2)||null; // вузол не може потрапити в багатокутник
+  }
+  if(loop||piv){ // петля або обхід багатокутника: вузол поза ним, дотична до вузла — по колу навколо нього
+    const p=loop?e.a.p:piv,R=rad(p);
+    let dx,dy;
+    if(loop){dx=A.nx+B.nx;dy=A.ny+B.ny;}else{dx=m0[0]-p.c[0];dy=m0[1]-p.c[1];}
+    let l=Math.hypot(dx,dy);
+    if(l<1e-6){dx=-A.ny;dy=A.nx;l=1;}
+    dx/=l;dy/=l;
+    let r=R+L;
+    if(loop){ // середина петлі на серединному перпендикулярі; відстань від круга 1.5R, а якщо між кінцями багато інших кінців — 3R чи 3.5R
+      const mm=p.m,aA=p.rot+2*PI*e.a.s/mm,ad=Math.atan2(-dy,dx),wr=a=>((a+PI)%(2*PI)+2*PI)%(2*PI)-PI,half=Math.abs(wr(aA-ad));
+      let cnt=0;
+      E.forEach(q=>[q.a,q.b].forEach(o=>{if(o.p===p&&o!==e.a&&o!==e.b&&Math.abs(wr(p.rot+2*PI*o.s/mm-ad))<half)cnt++;}));
+      r=R*(1+(cnt>4?3.5:cnt>2?3:1.5));
+    }
+    m0=[p.c[0]+dx*r,p.c[1]+dy*r];
+    u=[-dy,dx];if(u[0]*(B.x-A.x)+u[1]*(B.y-A.y)<0)u=[dy,-dx];
+    const dA=Math.hypot(m0[0]-A.x,m0[1]-A.y),dB=Math.hypot(m0[0]-B.x,m0[1]-B.y);
+    h=.4*(dA+dB)/2;c1=[A.x+T*dA*A.nx,A.y+T*dA*A.ny];c2=[B.x+T*dB*B.nx,B.y+T*dB*B.ny];
+  }
+  const M=[m0[0]+e.off[0],m0[1]+e.off[1]],ul=Math.hypot(...u)||1;u=[u[0]/ul,u[1]/ul];
+  const S1=[[A.x,A.y],c1,[M[0]-h*u[0],M[1]-h*u[1]],M],S2=[M,[M[0]+h*u[0],M[1]+h*u[1]],c2,[B.x,B.y]];
+  return{M,S1,S2,d:`M${q2(S1[0])}C${q2(S1[1])},${q2(S1[2])},${q2(S1[3])}C${q2(S2[1])},${q2(S2[2])},${q2(S2[3])}`};
+}
+// ---- ковзання ручки (handle slide) ----
+function curve(e){ // кінець, що рухається (ковзання, скорочення): сідло трохи тягнеться за ним, лишається гладким і не наближається до нерухомих кругів
+  const base=curveBase(e),fa=FEET&&FEET.get(e.a),fb=FEET&&FEET.get(e.b),sl=SLIDE&&SLIDE.e===e;
+  if(!fa&&!fb&&!sl)return base;
+  const A0=sp(e.a.p,e.a.s),B0=sp(e.b.p,e.b.s);
+  let A=A0,B=B0;
+  if(sl){if(SLIDE.h)B=SLIDE.foot;else A=SLIDE.foot;}
+  if(fa)A=fa;if(fb)B=fb;
+  const T=+$('T').value,dA=[A.x-A0.x,A.y-A0.y],dB=[B.x-B0.x,B.y-B0.y],nm=((A!==A0)+(B!==B0))||1;
+  const w=Math.min(1,Math.max(Math.hypot(...dA),Math.hypot(...dB))/30);
+  let M=[base.M[0]+.1*(dA[0]+dB[0])/nm,base.M[1]+.1*(dA[1]+dB[1])/nm];
+  P.forEach(q=>{ // відстань до нерухомого круга не меншає
+    if(DISP&&DISP.has(q))return;
+    const d0=Math.hypot(base.M[0]-q.c[0],base.M[1]-q.c[1]),d1=Math.hypot(M[0]-q.c[0],M[1]-q.c[1]);
+    if(d0>=rad(q)*.98&&d1<d0&&d1>1e-6)M=[q.c[0]+(M[0]-q.c[0])/d1*d0,q.c[1]+(M[1]-q.c[1])/d1*d0];
+  });
+  const u0=nz(base.S1[2],base.S2[1]),uc=nz([A.x,A.y],[B.x,B.y]);
+  let u=[u0[0]*(1-w)+uc[0]*w,u0[1]*(1-w)+uc[1]*w];const ul=Math.hypot(...u)||1;u=[u[0]/ul,u[1]/ul];
+  const dAm=Math.hypot(M[0]-A.x,M[1]-A.y),dBm=Math.hypot(M[0]-B.x,M[1]-B.y),ln=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  const lA=ln(base.S1[1],base.S1[0])*(1-w)+w*T*dAm,lB=ln(base.S2[2],base.S2[3])*(1-w)+w*T*dBm;
+  const h=ln(base.S1[3],base.S1[2])*(1-w)+w*.4*(dAm+dBm)/2;
+  const S1=[[A.x,A.y],[A.x+A.nx*lA,A.y+A.ny*lA],[M[0]-h*u[0],M[1]-h*u[1]],M],S2=[M,[M[0]+h*u[0],M[1]+h*u[1]],[B.x+B.nx*lB,B.y+B.ny*lB],[B.x,B.y]];
+  return{M,S1,S2,d:`M${q2(S1[0])}C${q2(S1[1])},${q2(S1[2])},${q2(S1[3])}C${q2(S2[1])},${q2(S2[2])},${q2(S2[3])}`};
+}
+function fillSlide(){
+  const o=[];E.forEach((e,i)=>{o.push([e.n,0,i],[e.n,1,i]);});
+  o.sort((a,b)=>a[0]-b[0]||a[2]-b[2]||a[1]-b[1]);
+  $('sh').innerHTML='<option value="">—</option>'+o.map(([n,h,i])=>`<option value="${i}:${h}">${n}${h?'B':'A'}</option>`).join('');
+  $('sl').value=0;
+}
+const quad=(a,c,b,n)=>Array.from({length:n+1},(_,i)=>{const u=i/n,v=1-u;return[v*v*a[0]+2*u*v*c[0]+u*u*b[0],v*v*a[1]+2*u*v*c[1]+u*u*b[1]];});
+function slidePlan(pr){
+  const sel=$('sh').value;if(!sel)return null;
+  const [ei,hh]=sel.split(':').map(Number),e=E[ei];if(!e||!(pr[e.n]>=.999))return null;
+  const o=hh?e.b:e.a,p=o.p,k=p.w.length,dirL=$('sd').value==='L';
+  if(k<2)return null;
+  const nb=(o.i+(dirL?-1:1)+k)%k;
+  const ex=E.find(q=>(q.a.p===p&&q.a.i===nb)||(q.b.p===p&&q.b.i===nb));
+  if(!ex||ex===e||!(pr[ex.n]>=.999))return null;
+  const hx=ex.a.p===p&&ex.a.i===nb?0:1,ox=hx?ex.b:ex.a,oy=hx?ex.a:ex.b,q=oy.p,cx=curve(ex);
+  const S0=sp(p,o.s),A1=sp(p,ox.s),B1=sp(q,oy.s),kq=q.w.length,mq=q.m;
+  const tw=!!TW[ex.n],before=dirL!==tw;
+  const a1B=q.rot+2*PI*oy.s/mq,nbq=(oy.i+(before?-1:1)+kq)%kq,aN=q.rot+2*PI*q.pos[nbq]/mq;
+  let gap=(before?(a1B-aN):(aN-a1B))%(2*PI);if(gap<=1e-9)gap+=2*PI;
+  const aT=a1B+(before?-1:1)*Math.min(4*PI/mq,gap/2),R0=rad(q)*Math.cos(PI/mq);
+  const nT=[Math.cos(aT),-Math.sin(aT)],T=[q.c[0]+R0*nT[0],q.c[1]+R0*nT[1]];
+  const kk=u=>.5*u;
+  const d1=Math.hypot(S0.x-A1.x,S0.y-A1.y),d4=Math.hypot(B1.x-T[0],B1.y-T[1]);
+  const leg1=quad([S0.x,S0.y],[A1.x-A1.nx*kk(d1),A1.y-A1.ny*kk(d1)],[A1.x,A1.y],14);
+  const s2=hx?cx.S2:cx.S1,s3=hx?cx.S1:cx.S2,leg2=[],leg3=[];
+  for(let i=0;i<=30;i++){leg2.push(bez(s2,hx?1-i/30:i/30));leg3.push(bez(s3,hx?1-i/30:i/30));}
+  const leg4=quad([B1.x,B1.y],[B1.x-B1.nx*kk(d4),B1.y-B1.ny*kk(d4)],T,14);
+  const PP=[...leg1,...leg2.slice(1),...leg3.slice(1),...leg4.slice(1)],cum=[0];
+  for(let i=1;i<PP.length;i++)cum.push(cum[i-1]+Math.hypot(PP[i][0]-PP[i-1][0],PP[i][1]-PP[i-1][1]));
+  const nS=[S0.nx,S0.ny],d0=nz(PP[0],PP[Math.min(4,PP.length-1)]);
+  const r=Math.sign(-d0[1]*nS[0]+d0[0]*nS[1])||1;
+  return{e,h:hh,o,oy,ex,hx,before,aT,sJ:dirL?1:-1,PP,cum,len:cum[cum.length-1]||1,nS,nT,r};
+}
+function footAt(pl,tau){
+  const g=tau*pl.len;let i=1;
+  while(i<pl.PP.length-1&&pl.cum[i]<g)i++;
+  const w=Math.min(1,Math.max(0,(g-pl.cum[i-1])/((pl.cum[i]-pl.cum[i-1])||1))),a=pl.PP[i-1],b=pl.PP[i];
+  const x=a[0]+(b[0]-a[0])*w,y=a[1]+(b[1]-a[1])*w;
+  const d=nz(pl.PP[Math.max(0,i-3)],pl.PP[Math.min(pl.PP.length-1,i+2)]),pp=[-d[1]*pl.r,d[0]*pl.r];
+  const sm=u=>u<=0?0:u>=1?1:u*u*(3-2*u),w0=sm(tau/.06),w1=sm((1-tau)/.06); // на кінцях дотична = нормаль до сторони
+  const n1=[pl.nS[0]*(1-w0)+pp[0]*w0,pl.nS[1]*(1-w0)+pp[1]*w0],n2=[pl.nT[0]*(1-w1)+n1[0]*w1,pl.nT[1]*(1-w1)+n1[1]*w1],l=Math.hypot(...n2)||1;
+  return{e:pl.e,h:pl.h,foot:{x,y,nx:n2[0]/l,ny:n2[1]/l},trail:[...pl.PP.slice(0,i),[x,y]],tau,F0:pl.PP[0],k:.1};
+}
+// підсвітка: бічна половина півручки, по якій ковзатимемо, з боку руху
+function stripPts(F,o,want){
+  const p=o.p,ss=sp(p,o.s),ang=p.rot+2*PI*o.s/p.m,a=F.Fa[0];
+  const sa=Math.sign((a[0]-ss.x)*-Math.sin(ang)+(a[1]-ss.y)*-Math.cos(ang))||1;
+  return [...F.Cc,...(sa===want?F.Fa:F.Fb).slice().reverse()];
+}
+const inPoly=(pt,Q)=>{let c=false;for(let i=0,j=Q.length-1;i<Q.length;j=i++){const a=Q[i],b=Q[j];if((a[1]>pt[1])!==(b[1]>pt[1])&&pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0])c=!c;}return c;};
+function pickSlide(pt){ // вибір ковзання кліком по підсвіченій половині (з натиснутою S/І або R/К)
+  if(!HD)return;
+  const pr=prog(),save=[$('sh').value,$('sd').value];
+  for(let ei=0;ei<E.length;ei++)for(const hx of[0,1]){
+    const ex=E[ei],ox=hx?ex.b:ex.a,p=ox.p,k=p.w.length;
+    if(k<2||!(pr[ex.n]>=.999))continue;
+    for(const dir of['L','R']){
+      const mi=(ox.i+(dir==='L'?1:-1)+k)%k;
+      const mv=E.findIndex(q=>(q.a.p===p&&q.a.i===mi)||(q.b.p===p&&q.b.i===mi));
+      if(mv<0)continue;
+      const mh=(E[mv].a.p===p&&E[mv].a.i===mi)?0:1;
+      $('sh').value=mv+':'+mh;$('sd').value=dir;
+      const pl=slidePlan(pr);
+      if(!pl||pl.ex!==ex||pl.hx!==hx)continue;
+      if(inPoly(pt,stripPts(finger(p,ox.s,ex,hx,1,ex.tw===hx),ox,pl.sJ))){$('sl').value=0;render();return;}
+    }
+  }
+  $('sh').value=save[0];$('sd').value=save[1];
+}
+// положення чисел слова на сторонах: найближчі до заданих кутів, проміжок між сусідніми ≥ 2
+function placePos(angs,rot,m){
+  const k=angs.length,u=angs.map(a=>(((a-rot)*m/(2*PI))%m+m)%m);
+  let r0=0;
+  for(let r=0;r<k;r++){let ok=true;for(let i=1;i<k;i++)if(u[(r+i)%k]<u[(r+i-1)%k]){ok=false;break;}if(ok){r0=r;break;}}
+  const p=[];
+  for(let i=0;i<k;i++){let v=Math.round(u[(r0+i)%k]);if(i)v=Math.max(v,p[i-1]+2);p.push(v);}
+  for(let it=0;it<3&&k>1&&p[k-1]>p[0]+m-2;it++){
+    p[k-1]=p[0]+m-2;for(let i=k-2;i>=0;i--)p[i]=Math.min(p[i],p[i+1]-2);
+    for(let i=1;i<k;i++)p[i]=Math.max(p[i],p[i-1]+2);
+  }
+  if(k>1&&p[k-1]>p[0]+m-2)return angs.map((_,i)=>2*i);
+  const out=Array(k);for(let i=0;i<k;i++)out[(r0+i)%k]=((p[i]%m)+m)%m;
+  return out;
+}
+let KEEP=null,OPB=null,GROW=null,OPOV=null,FADE=null,RAISE=null,DISP=null,FEET=null,CONS=null;
+const lighten=(hex,f)=>'#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-f)+255*f).toString(16).padStart(2,'0')).join('');
+const rz=(p,e)=>RAISE?((p&&RAISE.get(p))||(e&&RAISE.get(e.n))||0):0;
+const fade=(s,p)=>FADE&&FADE.p===p?`<g opacity="${FADE.a}">${s}</g>`:s;
+function saveBase(){OPB={g:P.map(p=>({c:p.c.slice(),rot:p.rot})),off:E.map(e=>e.off.slice())};}
+function restoreBase(){
+  if(!OPB)return;
+  P.forEach((p,i)=>{if(OPB.g[i]){p.c=OPB.g[i].c.slice();p.rot=OPB.g[i].rot;}});
+  E.forEach((e,i)=>{if(OPB.off[i])e.off=OPB.off[i].slice();});
+  OPB=null;
+}
+function codeFrom(W,tw){
+  const nums=[...new Set(W.flat())].sort((a,b)=>a-b),t2={};nums.forEach(n=>{if(tw[n])t2[n]=1;});
+  return W.map(w=>w.join(' ')).join(' 0 ')+(Object.keys(t2).length?' 00 '+nums.map(v=>t2[v]?'-':'+').join(''):'');
+}
+function boundaryClasses(){ // компоненти межі: дуги кругів з'єднують бічні краї ручок
+  const par={},find=x=>par[x]===x?x:(par[x]=find(par[x])),oth={};
+  E.forEach(e=>{const A=P.indexOf(e.a.p)+':'+e.a.i,B=P.indexOf(e.b.p)+':'+e.b.i,t=!!TW[e.n];oth[A]=[B,t];oth[B]=[A,t];});
+  const ek=(pi,i,s)=>{const a=pi+':'+i,[b,t]=oth[a]||[a,false],x=a+':'+s,y=b+':'+(t?s:-s);return x<y?x:y;};
+  const add=x=>{if(!(x in par))par[x]=x;return x;};
+  P.forEach((p,pi)=>{const k=p.w.length;for(let i=0;i<k;i++)for(const d of[1,-1]){
+    const rx=find(add(ek(pi,i,d))),ry=find(add(ek(pi,(i+d+k)%k,-d)));if(rx!==ry)par[rx]=ry;}});
+  return (pi,i,s)=>find(add(ek(pi,i,s)));
+}
+function canC12(e){ // кінці осі (зеленого відрізка) мають лежати на різних компонентах межі
+  const cnt={};[e.a,e.b].forEach(o=>{const a=P.indexOf(o.p);cnt[a]=(cnt[a]||0)+1;});
+  if(Object.keys(cnt).some(a=>P[a].w.length-cnt[a]<1))return false;
+  const cl=boundaryClasses(),pi=P.indexOf(e.a.p);
+  return cl(pi,e.a.i,1)!==cl(pi,e.a.i,-1);
+}
+function planC01(pr){
+  const sel=$('sh').value;if(!sel)return null;
+  const [ei,h]=sel.split(':').map(Number),e=E[ei];if(!e||!(pr[e.n]>=.999))return null;
+  let o=h?e.b:e.a,ob=h?e.a:e.b;if(o.p===ob.p)return null;
+  if(o.p.w.length!==1&&ob.p.w.length!==1)return null; // скорочення лише для круга, до якого примикає одна ручка
+  if(o.p.w.length!==1){const x=o;o=ob;ob=x;} // перевибір півручки, з якої починається рух
+  return{e,o,ob,p:o.p,q:ob.p,tw:!!TW[e.n]};
+}
+const cen=p=>(DISP&&DISP.get(p))||p.c;
+const footOf=o=>(FEET&&FEET.get(o))||sp(o.p,o.s);
+const occOf=(p,idx)=>{for(const e of E){if(e.a.p===p&&e.a.i===idx)return e.a;if(e.b.p===p&&e.b.i===idx)return e.b;}return null;};
+function animC01(pl,tau){ // малий круг їде по осі ручки, поглинаючи її, і заходить під великий
+  const p=pl.p,q=pl.q,e=pl.e,L=+$('L').value;
+  const sm=u=>{u=Math.min(1,Math.max(0,u));return u*u*(3-2*u);},u=sm(tau/.85),w3=sm((tau-.85)/.15);
+  const wrap=a=>((a+PI)%(2*PI)+2*PI)%(2*PI)-PI,lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+  const c=curve(e),hp=pl.o===e.b?1:0,hq=1-hp,Sp=hp?c.S2:c.S1,Sq=hq?c.S2:c.S1;
+  const A=sp(p,pl.o.s),Bq=sp(q,pl.ob.s),rp=rad(p),rq=rad(q),aq=rq*Math.cos(PI/q.m);
+  const dq=nz(q.c,[Bq.x,Bq.y]),dE=Math.min(Math.max(rq-rp,0),.5*aq),Ee=[q.c[0]+dq[0]*dE,q.c[1]+dq[1]*dE];
+  const pts=[];
+  for(let i=0;i<=8;i++)pts.push(lerp(p.c,[A.x,A.y],i/8));
+  const n0=pts.length-1;
+  for(let i=1;i<=24;i++)pts.push(bez(Sp,hp?1-i/24:i/24));
+  for(let i=1;i<=24;i++)pts.push(bez(Sq,hq?i/24:1-i/24));
+  for(let i=1;i<=8;i++)pts.push(lerp([Bq.x,Bq.y],Ee,i/8));
+  const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  const dist=u*cum[cum.length-1];let j=1;while(j<pts.length-1&&cum[j]<dist)j++;
+  const cc=lerp(pts[j-1],pts[j],Math.min(1,Math.max(0,(dist-cum[j-1])/((cum[j]-cum[j-1])||1))));
+  DISP=new Map([[p,cc]]);
+  CONS={e,hp,dcons:Math.max(0,dist-cum[n0]),Lhp:arcTable(Sp,hp).Len,Lhq:arcTable(Sq,hq).Len};
+  // а) інші ручки круга p переходять на протилежне півколо (кут до ручки > 90°)
+  FEET=new Map();
+  const k=p.w.length,m=p.m,aH=p.rot+2*PI*pl.o.s/m,r=k-1,R0p=rp*Math.cos(PI/m),step=Math.min(4*PI/m,2.79/Math.max(1,r-1));
+  for(let jx=1;jx<=r;jx++){
+    const idx=(pl.o.i+jx)%k,aOld=p.rot+2*PI*p.pos[idx]/m,a=aOld,oc=occOf(p,idx);
+    if(oc)FEET.set(oc,{x:cc[0]+R0p*Math.cos(a),y:cc[1]-R0p*Math.sin(a),nx:Math.cos(a),ny:-Math.sin(a)});
+  }
+  CONS.flare=r>0?u*Math.min(r,3)*.6:0; // кінець ручки біля великого круга лишається на місці, але розширюється — туди вийдуть ручки малого круга
+  RAISE=new Map([[p,1.5e6],[q,2e6],[e.n,1e6]]); // ручка < малий круг < великий круг: краї ручки закінчуються на межі малого круга
+  if(rp>rq&&w3>0)FADE={p,a:1-w3};
+}
+function growFrame(tau){
+  GROW.tau=tau;
+  if(GROW.kind==='b12'){OPOV={n:GROW.n,v:tau};return;}
+  // мале коло виповзає з-під великого по променю з його центра, ручка тягнеться за ним
+  const par=P[GROW.qI],np=P[GROW.pI],s=GROW.D*tau,d=GROW.dir,cn=[par.c[0]+d[0]*s,par.c[1]+d[1]*s];
+  const Rn=rad(np)*Math.cos(PI/np.m),Rp=rad(par)*Math.cos(PI/par.m),e=E.find(x=>x.n===GROW.n);
+  DISP=new Map([[np,cn]]);
+  if(e)FEET=new Map([[e.a.p===np?e.a:e.b,{x:cn[0]-d[0]*Rn,y:cn[1]-d[1]*Rn,nx:-d[0],ny:-d[1]}]]);
+  OPOV={n:GROW.n,v:s-Rp-Rn>1?1:0};
+  RAISE=new Map([[par,2e6],[np,1e6],[GROW.n,1.5e6]]);
+}
+function finalizeGrow(){GROW=null;OPOV=null;$('sl').value=0;}
+function opFrame(){ // кадр анімації операцій (до малювання)
+  FADE=null;RAISE=null;OPOV=null;DISP=null;FEET=null;CONS=null;
+  const kind=$('op').value,tau=+$('sl').value;
+  if(GROW){growFrame(tau);return;}
+  if(!(HD&&$('sh').value&&tau>0&&(kind==='c01'||kind==='c12')))return;
+  const e=E[+$('sh').value.split(':')[0]];
+  if(kind==='c12'){if(e&&canC12(e))OPOV={n:e.n,v:1-tau};return;} // обернено до склеювання
+  const pl=planC01(prog(true));
+  if(pl)animC01(pl,tau);
+}
+function applyKeep(){ // після операції змінюються лише задіяні круги; решта лишається як була
+  const K0=KEEP;KEEP=null;
+  P.forEach((p,i)=>{
+    const oi=K0.map?K0.map[i]:i,o=K0.old[oi];
+    if(!o){p.c=K0.newC.slice();p.rot=K0.newRot;setPos(p,p.w.map((_,j)=>2*j));return;}
+    p.c=o.c.slice();p.rot=o.rot;
+    if(K0.reset&&K0.reset.i===i){p.rot=K0.reset.rot;setPos(p,p.w.map((_,j)=>2*j));return;}
+    const f=K0.edit&&K0.edit[i];
+    if(!f){setPos(p,o.pos.slice());return;}
+    setPos(p,placePos(f(o.pos.map(ps=>o.rot+2*PI*ps/o.m)),p.rot,p.m));
+  });
+  fit();
+}
+function commit(W,tw,K0,extra){ // застосувати новий код із збереженням геометрії та зсувів вузлів
+  const offs={},loopB={};E.forEach(e=>{if(!offs[e.n]){offs[e.n]=e.off.slice();loopB[e.n]=e.a.p===e.b.p;}});
+  K0.old=P.map(p=>({c:p.c.slice(),rot:p.rot,pos:p.pos.slice(),m:p.m}));
+  KEEP=K0;$('code').value=codeFrom(W,tw);parse();
+  E.forEach(e=>{e.off=offs[e.n]?offs[e.n].slice():[0,0];if(e.a.p===e.b.p&&!loopB[e.n])e.off=[0,0];}); // ручка, що стала петлею, — за правилом розташування середини
+  if(extra)extra();
+  render();
+}
+function applySlide(){ // ковзання: число переходить на інший кінець сусідньої ручки
+  restoreBase();
+  const pl=slidePlan(prog(true));if(!pl)return;
+  SLIDE=footAt(pl,1);const Mfin=curve(pl.e).M;SLIDE=null;
+  const W=P.map(p=>p.w.slice()),wi=P.indexOf(pl.o.p),wj=P.indexOf(pl.oy.p),n=pl.e.n,r=pl.o.i;
+  let pj=pl.oy.i;
+  W[wi].splice(r,1);
+  if(wi===wj&&pj>r)pj--;
+  const ins=pl.before?pj:pj+1;
+  W[wj].splice(ins,0,n);
+  const tw={...TW};
+  if(TW[pl.ex.n]){if(tw[n])delete tw[n];else tw[n]=1;} // ковзання по перекрученій ручці міняє знак
+  const edit={},f=a=>{return a;};
+  [wi,wj].forEach(i=>{edit[i]=angs=>{if(i===wi)angs.splice(r,1);if(i===wj)angs.splice(ins,0,pl.aT);return angs;};});
+  commit(W,tw,{edit},()=>{const ne=E.find(e=>e.n===n);if(ne){if(ne.a.p===ne.b.p)ne.off=[0,0];else{const b=curveBase(ne).M;ne.off=[Mfin[0]-b[0],Mfin[1]-b[1]];}}});
+}
+function applyC01(){ // 0-1 скорочення: круг із 3A вливається в круг із 3B
+  restoreBase();
+  const pl=planC01(prog(true));if(!pl)return;
+  const W=P.map(p=>p.w.slice()),wp=P.indexOf(pl.p),wq=P.indexOf(pl.q),n=pl.e.n,w=W[wp],i0=pl.o.i;
+  const rest=[...w.slice(i0),...w.slice(0,i0)].slice(1),ins=pl.tw?rest.slice().reverse():rest;
+  W[wq].splice(pl.ob.i,1,...ins);
+  const tw={...TW};delete tw[n];
+  if(pl.tw){const c={};rest.forEach(v=>{c[v]=(c[v]||0)+1;});rest.forEach(v=>{if(c[v]===1){if(tw[v])delete tw[v];else tw[v]=1;}});}
+  const oq=P[wq],kq=oq.w.length;
+  const an=oq.pos.map(ps=>oq.rot+2*PI*ps/oq.m),sx=an.reduce((s,a)=>s+Math.sin(a),0),sy=an.reduce((s,a)=>s+Math.cos(a),0);
+  const mean=Math.hypot(sx,sy)>1e-6?Math.atan2(sx,sy):oq.rot+(kq-1)*2*PI/oq.m;
+  W.splice(wp,1);
+  const nq=wq>wp?wq-1:wq,kn=W[nq].length,mn=Math.max(3,2*kn+(+$('ex').value));
+  commit(W,tw,{map:P.map((_,i)=>i).filter(i=>i!==wp),reset:{i:nq,rot:mean-(kn-1)*2*PI/mn}});
+}
+function applyC12(){ // 1-2 скорочення: ручка зникає, пару чисел викреслюємо
+  restoreBase();
+  const sel=$('sh').value;if(!sel)return;
+  const e=E[+sel.split(':')[0]];if(!e||!canC12(e))return;
+  const W=P.map(p=>p.w.slice()),rm={};
+  [e.a,e.b].forEach(o=>{const i=P.indexOf(o.p);(rm[i]=rm[i]||[]).push(o.i);});
+  Object.keys(rm).forEach(i=>rm[i].sort((a,b)=>b-a).forEach(j=>W[i].splice(j,1)));
+  const tw={...TW};delete tw[e.n];
+  const edit={};Object.keys(rm).forEach(i=>{edit[i]=angs=>{rm[i].forEach(j=>angs.splice(j,1));return angs;};});
+  commit(W,tw,{edit});
+}
+function applyBirth(kind,anim){ // народження: 0-1 — нова ручка з малим кругом, 1-2 — нова петля на дузі
+  restoreBase();
+  const sel=$('sh').value;if(!sel)return false;
+  const e=E[+sel.split(':')[0]],h=+sel.split(':')[1];if(!e)return false;
+  const o=h?e.b:e.a,p=o.p,wp=P.indexOf(p),k=p.w.length,L=+$('L').value,ex=+$('ex').value;
+  const aO=p.rot+2*PI*o.s/p.m,aN=p.rot+2*PI*p.pos[(o.i+1)%k]/p.m;
+  let gap=(((aN-aO)%(2*PI))+2*PI)%(2*PI);if(k===1||gap<1e-6)gap=2*PI;
+  const aArc=aO+gap/2,x=Math.max(...P.flatMap(q=>q.w))+1,W=P.map(q=>q.w.slice()),K0={edit:{}};
+  let g=null;
+  if(kind==='b01'){
+    W[wp].splice(o.i+1,0,x);W.push([x]);
+    const mp=Math.max(3,2*W[wp].length+ex),mn=Math.max(3,2+ex),D0=L/(2*Math.tan(PI/mp))+L/(2*Math.tan(PI/mn)),D=D0+2.5*L,dir=[Math.cos(aArc),-Math.sin(aArc)];
+    K0.edit[wp]=angs=>{angs.splice(o.i+1,0,aArc);return angs;};
+    K0.newC=[p.c[0]+dir[0]*D,p.c[1]+dir[1]*D];K0.newRot=aArc+PI;
+    g={kind,n:x,pI:W.length-1,qI:wp,dir,D0,D,tau:0};
+  }else{
+    W[wp].splice(o.i+1,0,x,x);
+    const u=2*PI/Math.max(3,2*W[wp].length+ex);
+    K0.edit[wp]=angs=>{angs.splice(o.i+1,0,aArc-1.5*u,aArc+1.5*u);return angs;};
+    g={kind,n:x,tau:0};
+  }
+  commit(W,{...TW},K0,anim?()=>{GROW=g;$('sl').value=0;}:null);
+  return true;
+}
+function verts(p){
+  return Array.from({length:p.m},(_,j)=>{const a=p.rot+2*PI*(j+.5)/p.m;return[p.c[0]+rad(p)*Math.cos(a),p.c[1]-rad(p)*Math.sin(a)];});
+}
+let TW={};
+
+// ---- потік Морса ----
+let HL=null,SLIDE=null,AT=0,HD=0,FL=0,OC='#888',OW=1.5,RC='#d62828',GC='#2e9e44'; // FL: 0 — без потоку, 1 — потік, 2 — обернений потік
+function arcTable(S,half){
+  const K=48,ts=[],cum=[0];
+  for(let k=0;k<=K;k++){ts.push(half?1-k/K:k/K);if(k){const u=bez(S,ts[k-1]),v=bez(S,ts[k]);cum.push(cum[k-1]+Math.hypot(u[0]-v[0],u[1]-v[1]));}}
+  const Len=cum[K]||1;
+  const fn=f=>{const g=f*Len;let k=1;while(k<K&&cum[k]<g)k++;return ts[k-1]+(ts[k]-ts[k-1])*((g-cum[k-1])/((cum[k]-cum[k-1])||1));};fn.Len=Len;return fn;
+}
+// синя траєкторія поруч із червоною: зсув L/4, на половині півстрічки виходить на бічний край (зсув L/2)
+function lane(S,half,sd,L,ss){
+  const tAt=arcTable(S,half),Len=tAt.Len,pts=[],N=40,rl=Math.min(L/2,.5*Len),k=L/(2*rl);
+  for(let i=0;i<=N;i++){
+    const tau=.5*i/N,t=tAt(tau),C=bez(S,t),x=tau*Len;
+    let T=bzd(S,t);if(half)T=[-T[0],-T[1]];
+    let l=Math.hypot(...T);if(l<1e-6){T=[ss.nx,ss.ny];l=1;}
+    const u=Math.max(0,x-(.5*Len-rl)),w=L/4+k*u*u/(2*rl); // плавний (C1) відхід, на краї кут 45°
+    pts.push([C[0]-sd*T[1]/l*w,C[1]+sd*T[0]/l*w]);
+  }
+  return pts;
+}
+const arrow=(p,d,z,col)=>{
+  const n=[-d[1],d[0]],P=(a,b)=>q2([p[0]+d[0]*a+n[0]*b,p[1]+d[1]*a+n[1]*b]);
+  return `<path d="M${P(z/2,0)}L${P(-z/2,z/3)}L${P(-z/2,-z/3)}Z" fill="${col}" stroke="none" pointer-events="none"/>`;
+};
+function midArrow(pl,z,col,sg=1){ // стрілка посередині ламаної, напрямок від початку (джерела) до кінця
+  const ls=pl.map((v,i)=>i?Math.hypot(v[0]-pl[i-1][0],v[1]-pl[i-1][1]):0),tot=ls.reduce((a,b)=>a+b,0);
+  let g=tot/2,i=1;while(i<pl.length-1&&g>ls[i]){g-=ls[i];i++;}
+  const a=pl[i-1],b=pl[i],f=g/(ls[i]||1);
+  const d0=nz(a,b);
+  return arrow([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f],[d0[0]*sg,d0[1]*sg],z,col);
+}
+// ---- розклад на ручки: криві лише поза кругами ----
+const inAny=v=>P.some(p=>Math.hypot(v[0]-cen(p)[0],v[1]-cen(p)[1])<(AT?holeR(p):rad(p)));
+function clipOut(pl){ // частини ламаної поза всіма кругами; точку на межі уточнюємо бісекцією
+  const out=[];let cur=null;
+  const edge=(a,b)=>{
+    let lo=0,hi=1;const ia=inAny(a);
+    for(let k=0;k<14;k++){const m=(lo+hi)/2;if(inAny([a[0]+(b[0]-a[0])*m,a[1]+(b[1]-a[1])*m])===ia)lo=m;else hi=m;}
+    const m=(lo+hi)/2;return[a[0]+(b[0]-a[0])*m,a[1]+(b[1]-a[1])*m];
+  };
+  pl.forEach((v,i)=>{
+    const iv=inAny(v);
+    if(!i){if(!iv)cur=[v];return;}
+    const ip=inAny(pl[i-1]);
+    if(!ip&&!iv)cur.push(v);
+    else if(!ip&&iv){cur.push(edge(pl[i-1],v));out.push(cur);cur=null;}
+    else if(ip&&!iv)cur=[edge(pl[i-1],v),v];
+  });
+  if(cur)out.push(cur);
+  return out;
+}
+const dens=(pl,n)=>{const r=[];pl.forEach((v,i)=>{if(!i)return;for(let k=0;k<n;k++)r.push([pl[i-1][0]+(v[0]-pl[i-1][0])*k/n,pl[i-1][1]+(v[1]-pl[i-1][1])*k/n]);});r.push(pl[pl.length-1]);return r;};
+const clipD=(pl,n)=>clipOut(dens(pl,n)).filter(a=>a.length>1).map(a=>a.map((v,k)=>(k?'L':'M')+q2(v)).join('')).join('');
+function flow(o,h,e,w){
+  const p=o.p,c=curve(e),S=h?c.S2:c.S1,ss=footOf(o),L=+$('L').value,sz=7+2*w,sl=SLIDE&&SLIDE.e===e&&SLIDE.h===h,cs=CONS&&CONS.e===e,mine=cs&&h===CONS.hp,pl=sl?[cen(p),...SLIDE.trail]:(mine?[cen(p)]:[cen(p),[ss.x,ss.y]]);
+  const ds=(HD||AT)&&$('dh').value==='1'?` stroke-dasharray="${2*w+6} ${w+4}"`:'';
+  if(cs){
+    const at=arcTable(S,h),f0=mine?Math.min(1,CONS.dcons/CONS.Lhp):0,f1=mine?1:Math.max(0,1-Math.max(0,CONS.dcons-CONS.Lhp)/CONS.Lhq);
+    for(let i=0;i<=30;i++)pl.push(bez(S,at(f0+(f1-f0)*i/30)));
+  }else for(let i=0;i<=30;i++)pl.push(bez(S,h?1-i/30:i/30));
+  const rv=FL==2?-1:1;
+  let r=`<path d="${(HD||AT)?clipD(pl,4):pl.map((v,k)=>(k?'L':'M')+q2(v)).join('')}" fill="none" stroke="${RC}" stroke-width="${w}" stroke-linejoin="round"${ds} pointer-events="none"/>`;
+  if(!HD&&!AT){
+    r+=arrow([ss.x,ss.y],[rv*ss.nx,rv*ss.ny],sz,RC);
+    for(const sd of[1,-1]){
+      const ln=lane(S,h,sd,L,ss),P0=ln[0],dd=Math.hypot(P0[0]-p.c[0],P0[1]-p.c[1]);
+      const c1=[p.c[0]+(P0[0]-p.c[0])*.4,p.c[1]+(P0[1]-p.c[1])*.4],c2=[P0[0]-ss.nx*.35*dd,P0[1]-ss.ny*.35*dd];
+      const pl2=[...Array.from({length:12},(_,i)=>bez([p.c,c1,c2,P0],i/12)),...ln]; // без зламу біля сторони
+      r+=`<path d="${pl2.map((v,k)=>(k?'L':'M')+q2(v)).join('')}" fill="none" stroke="#1d4ed8" stroke-width="${w/2}" pointer-events="none"/>`+midArrow(pl2,4+1.2*w,'#1d4ed8',rv);
+    }
+  }
+  if(h&&!(cs&&CONS.dcons>=CONS.Lhp)){ // сідло в центрі шва: відрізки до межі
+    const T=nz(c.S1[2],c.M),pp=[-T[1],T[0]];
+    for(const sd of[1,-1]){
+      const d=[sd*pp[0],sd*pp[1]],E=[c.M[0]+d[0]*L/2,c.M[1]+d[1]*L/2];
+      r+=`<path d="${(HD||AT)?clipD([c.M,E],12):`M${q2(c.M)}L${q2(E)}`}" fill="none" stroke="${GC}" stroke-width="${w}"${ds} pointer-events="none"/>`;
+      if(!HD&&!AT)r+=FL==2?arrow([c.M[0]+d[0]*L/4,c.M[1]+d[1]*L/4],[-d[0],-d[1]],sz,GC):arrow([E[0]-d[0]*sz/2,E[1]-d[1]*sz/2],d,sz,GC);
+    }
+  }
+  return r;
+}
+// ---- Атом: критичний рівень (вісімки в сідлах) ----
+const holeR=p=>{const R0=rad(p)*Math.cos(PI/p.m);return Math.max(R0-+$('L').value,R0/6);};
+const smoothD=(P,r)=>{ // згладжування кута в другій точці ламаної
+  const a=P[0],v=P[1],b=P[2]||P[1],c=Math.min(r,Math.hypot(v[0]-a[0],v[1]-a[1])/2,Math.hypot(b[0]-v[0],b[1]-v[1])/2),u1=nz(v,a),u2=nz(v,b);
+  return 'M'+q2(a)+'L'+q2([v[0]+u1[0]*c,v[1]+u1[1]*c])+'Q'+q2(v)+' '+q2([v[0]+u2[0]*c,v[1]+u2[1]*c])+P.slice(2).map(x=>'L'+q2(x)).join('');
+};
+function atomK(pr){
+  const L=+$('L').value,lw=L/5,S2=Math.SQRT1_2,rays=[],top=[];
+  E.forEach(e=>{
+    if(!(pr[e.n]>=.999))return;
+    const M=curve(e).M;
+    [[e.a,0],[e.b,1]].forEach(([o,h])=>{
+      const F=finger(o.p,o.s,e,h,1,e.tw===h),Cc=F.Cc,N=Cc.length-1,T=nz(Cc[N-1],Cc[N]),Pp=[-T[1],T[0]];
+      // межі l: лінії на відстані d/4 від країв стрічки
+      const lanes=[F.Fa,F.Fb].map(G=>G.map((g,i)=>[(g[0]+Cc[i][0])/2,(g[1]+Cc[i][1])/2]));
+      for(const sg of[1,-1]){
+        const d=[(-T[0]+sg*Pp[0])*S2,(-T[1]+sg*Pp[1])*S2];let best=null;
+        lanes.forEach((lp,k)=>{for(let i=1;i<lp.length;i++){
+          const A=lp[i-1],ex=lp[i][0]-A[0],ey=lp[i][1]-A[1],den=d[0]*ey-d[1]*ex;
+          if(Math.abs(den)<1e-9)continue;
+          const ax=A[0]-M[0],ay=A[1]-M[1],t=(ax*ey-ay*ex)/den,u=(ax*d[1]-ay*d[0])/den;
+          if(t>1e-6&&t<3*L&&u>=0&&u<=1&&(!best||t<best.t))best={t,i,lp,k,u};
+        }});
+        if(!best)continue;
+        const H=[M[0]+best.t*d[0],M[1]+best.t*d[1]],lp=best.lp,rest=[];
+        const rpn=[];
+        for(let i=best.i-1;i>=0;i--)if(Math.hypot(lp[i][0]-H[0],lp[i][1]-H[1])>=lw||i===0){rest.push(lp[i]);rpn.push(-F.pos[i]);}
+        const pp=[M,H,...rest],pn=[-F.pos[N],-(F.pos[best.i-1]+best.u*(F.pos[best.i]-F.pos[best.i-1])),...rpn];
+        let dd=smoothD(pp,lw);
+        if(e.tw===h&&best.k===0){ // та сама лінія, що в межі (Fa), розривається в місці скрутки на ту ж довжину
+          const lo=-(F.zc+2.2),hi=-(F.zc-2.2),a=[],b=[];
+          pp.forEach((v,i)=>{if(pn[i]<=lo)a.push(v);else if(pn[i]>=hi)b.push(v);});
+          const lerp=(i,x)=>{const w=(x-pn[i])/((pn[i+1]-pn[i])||1);return[pp[i][0]+(pp[i+1][0]-pp[i][0])*w,pp[i][1]+(pp[i+1][1]-pp[i][1])*w];};
+          const i0=pn.findIndex(x=>x>lo)-1,i1=pn.findIndex(x=>x>=hi);
+          if(a.length&&i0>=0&&i0<pp.length-1)a.push(lerp(i0,lo));
+          if(b.length&&i1>0)b.unshift(lerp(i1-1,hi));
+          if(a.length>1)dd=smoothD(a,lw)+(b.length>1?'M'+q2(b[0])+b.slice(1).map(x=>'L'+q2(x)).join(''):'');
+        }
+        const ss=sp(o.p,o.s),ang=o.p.rot+2*PI*o.s/o.p.m,base=lp[0];
+        const sJ=Math.sign((base[0]-ss.x)*-Math.sin(ang)+(base[1]-ss.y)*-Math.cos(ang))||1;
+        rays.push({e,h,p:o.p,pi:P.indexOf(o.p),s:o.s,sJ,base,d:dd});
+      }
+    });
+  });
+  rays.forEach((r,i)=>{r.id=i;});
+  rays.forEach(r=>{ // наступний промінь уздовж межі: обходимо коло, поки не зустрінемо вхід наступної стрічки
+    const p=r.p,m=p.m,dl=2*PI/m,dir=r.sJ,ang=p.rot+2*PI*r.s/m;
+    let r2=null,bd=1e9;
+    rays.forEach(q=>{
+      if(q.pi!==r.pi||q.sJ!==-dir)return;
+      let dd=((p.rot+2*PI*q.s/m-ang)*dir)%(2*PI);if(dd<0)dd+=2*PI;if(dd<1e-9)dd=2*PI;
+      if(dd<bd){bd=dd;r2=q;}
+    });
+    if(!r2||r2.id<r.id)return;
+    const a1=ang+dir*dl,ang2=p.rot+2*PI*r2.s/m,a2=ang2-dir*dl,dA=Math.max(0,bd-2*dl);
+    const R0=rad(p)*Math.cos(PI/m),Rl=R0-+$('L').value/4,c=p.c;
+    const Q1=[c[0]+Rl*Math.cos(a1),c[1]-Rl*Math.sin(a1)],Q2=[c[0]+Rl*Math.cos(a2),c[1]-Rl*Math.sin(a2)];
+    const n1=[Math.cos(ang),-Math.sin(ang)],n2=[Math.cos(ang2),-Math.sin(ang2)];
+    const t1=[-dir*Math.sin(a1),-dir*Math.cos(a1)],t2=[-dir*Math.sin(a2),-dir*Math.cos(a2)];
+    const k1=.5*Math.hypot(r.base[0]-Q1[0],r.base[1]-Q1[1]),k2=.5*Math.hypot(r2.base[0]-Q2[0],r2.base[1]-Q2[1]);
+    const mid=dA>.01?`A${Rl} ${Rl} 0 ${dA>PI?1:0} ${dir>0?0:1} ${q2(Q2)}`:`L${q2(Q2)}`;
+    top.push({pi:r.pi,d:`M${q2(r.base)}C${q2([r.base[0]-n1[0]*k1,r.base[1]-n1[1]*k1])},${q2([Q1[0]-t1[0]*k1,Q1[1]-t1[1]*k1])},${q2(Q1)}${mid}C${q2([Q2[0]+t2[0]*k2,Q2[1]+t2[1]*k2])},${q2([r2.base[0]-n2[0]*k2,r2.base[1]-n2[1]*k2])},${q2(r2.base)}`});
+  });
+  return{rays,top};
+}
+// стрічка: бік side многокутника p рухається вздовж кривої на частку s (за довжиною дуги); tw — перекрутка на цій півстрічці
+function finger(p,side,e,half,s,tw){
+  const S=half?curve(e).S2:curve(e).S1,fo=FEET&&FEET.get(half?e.b:e.a),sd0=SLIDE&&SLIDE.e===e&&SLIDE.h===half,sl=sd0||!!fo,ss=sd0?SLIDE.foot:(fo||sp(p,side)),L2=+$('L').value/2,m=p.m;
+  const a=verts(p)[(side-1+m)%m],pp=[-ss.ny,ss.nx];
+  const sg=sl?1:(Math.sign((a[0]-ss.x)*pp[0]+(a[1]-ss.y)*pp[1])||1);
+  const K=48,ts=[],cum=[0];
+  for(let k=0;k<=K;k++){ts.push(half?1-k/K:k/K);if(k){const u=bez(S,ts[k-1]),v=bez(S,ts[k]);cum.push(cum[k-1]+Math.hypot(u[0]-v[0],u[1]-v[1]));}}
+  const Len=cum[K]||1;
+  const tAt=f=>{const g=f*Len;let k=1;while(k<K&&cum[k]<g)k++;return ts[k-1]+(ts[k]-ts[k-1])*((g-cum[k-1])/((cum[k]-cum[k-1])||1));};
+  const zc=.8*Len,z=Math.max(1,Math.min(L2,.18*Len)); // перекрутка на відстані 1/5 довжини від шва
+  const cs=CONS&&CONS.e===e;let t0=0;
+  if(cs){if(half===CONS.hp)t0=Math.min(1,CONS.dcons/CONS.Lhp);else s=Math.min(s,1-Math.max(0,CONS.dcons-CONS.Lhp)/CONS.Lhq);}
+  if(s-t0<.002)return{Fa:[],Fb:[],pos:[],Cc:[],zc:0,c:[]};
+  const N=Math.max(2,Math.ceil(40*(s-t0))),Fa=[],Fb=[],pos=[],Cc=[];
+  for(let i=0;i<=N;i++){
+    const tau=t0+(s-t0)*i/N,t=tAt(tau),C=bez(S,t);pos.push(tau*Len);Cc.push(C);
+    let T=bzd(S,t);if(half)T=[-T[0],-T[1]];
+    let l=Math.hypot(...T);if(l<1e-6){T=[ss.nx,ss.ny];l=1;}
+    const f=tw?Math.cos(PI*Math.min(1,Math.max(0,(tau*Len-(zc-z))/(2*z)))):1;
+    const gw=(cs&&half!==CONS.hp&&CONS.flare)?1+CONS.flare*Math.pow(Math.max(0,1-tau*Len/(3*L2)),2):1,nx=-T[1]/l*L2*f*gw,ny=T[0]/l*L2*f*gw;
+    Fa.push([C[0]+sg*nx,C[1]+sg*ny]);Fb.push([C[0]-sg*nx,C[1]-sg*ny]);
+  }
+  return{Fa,Fb,pos,zc,Cc,c:Fa.concat(Fb.slice().reverse())};
+}
+// ламана F з розривом для позицій pos у (lo,hi): лінія «йде під» іншою в місці перекрутки
+function gapPath(F,pos,lo,hi){
+  let d='',pen=false;
+  const at=(i,v)=>{const w=(v-pos[i-1])/((pos[i]-pos[i-1])||1);return[F[i-1][0]+(F[i][0]-F[i-1][0])*w,F[i-1][1]+(F[i][1]-F[i-1][1])*w];};
+  const put=v=>{d+=(pen?'L':'M')+q2(v);pen=true;};
+  F.forEach((v,i)=>{
+    const x=pos[i];
+    if(!i){if(x<=lo||x>=hi)put(v);return;}
+    const y=pos[i-1];
+    if(y<=lo&&x>lo){put(at(i,lo));pen=false;}
+    if(y<hi&&x>=hi)put(at(i,hi));
+    if(x>=hi||x<=lo)put(v);
+  });
+  return d;
+}
+// перетини півкривих з іншими стрічками (для вибору півстрічки з перекруткою)
+const polyOf=(c,n=24)=>[c.S1,c.S2].map(S=>Array.from({length:n+1},(_,k)=>bez(S,k/n)));
+const segX=(p,q,r,s)=>{
+  const d=(q[0]-p[0])*(s[1]-r[1])-(q[1]-p[1])*(s[0]-r[0]);if(!d)return false;
+  const t=((r[0]-p[0])*(s[1]-r[1])-(r[1]-p[1])*(s[0]-r[0]))/d,u=((r[0]-p[0])*(q[1]-p[1])-(r[1]-p[1])*(q[0]-p[0]))/d;
+  return t>0&&t<1&&u>0&&u<1;
+};
+const crossN=(a,bs)=>{let n=0;for(const b of bs)for(let i=1;i<a.length;i++)for(let j=1;j<b.length;j++)if(segX(a[i-1],a[i],b[j-1],b[j]))n++;return n;};
+const nz=(a,b)=>{const x=b[0]-a[0],y=b[1]-a[1],l=Math.hypot(x,y)||1;return[x/l,y/l];};
+const sgn=(P1,O,P2)=>((P1[0]-O[0])*(P2[1]-O[1])-(P1[1]-O[1])*(P2[0]-O[0]))>0?1:0;
+const plen=F=>F.reduce((s,v,i)=>s+(i?Math.hypot(v[0]-F[i-1][0],v[1]-F[i-1][1]):0),0);
+// вгнуте закруглення (назовні) в місці, де стрічка виходить з багатокутника
+function patch(v,r1,F,r,fill){
+  // криві з'єднання: початок T1 на стороні багатокутника, кінець T2 на реальній межі стрічки (ламана F)
+  const q=Math.min(r,.9*plen(F));
+  if(q<.5)return'';
+  let acc=0,i=1;
+  while(i<F.length-1){const l=Math.hypot(F[i][0]-F[i-1][0],F[i][1]-F[i-1][1]);if(acc+l>=q)break;acc+=l;i++;}
+  const seg=Math.hypot(F[i][0]-F[i-1][0],F[i][1]-F[i-1][1])||1,w=Math.min(1,(q-acc)/seg);
+  const T2=[F[i-1][0]+(F[i][0]-F[i-1][0])*w,F[i-1][1]+(F[i][1]-F[i-1][1])*w],tF=nz(F[i-1],F[i]);
+  const T1=[v[0]+r1[0]*q,v[1]+r1[1]*q],c=.55*q;
+  const cv=`C${q2([T1[0]-r1[0]*c,T1[1]-r1[1]*c])},${q2([T2[0]-tF[0]*c,T2[1]-tF[1]*c])},${q2(T2)}`;
+  const back=F.slice(0,i).reverse().map(x=>'L'+q2(x)).join('');
+  return `<path d="M${q2(v)}L${q2(T1)}${cv}${back}Z" fill="${fill}" stroke="${fill}" stroke-width="${Math.max(3,+OW+2)}" stroke-linejoin="round" pointer-events="none"/><path d="M${q2(T1)}${cv}" fill="none" stroke="${OC}" stroke-width="${OW}" pointer-events="none"/>`;
+}
+function prog(noOv){
+  const sel=[...document.querySelectorAll('#ch input:checked')].map(x=>+x.value).sort((a,b)=>a-b);
+  const tt=+$('tt').value,seq=$('mode').value==='seq',G=sel.length,r={};
+  sel.forEach((n,i)=>{r[n]=seq?Math.min(1,Math.max(0,tt*G-i)):tt;});
+  if(!noOv&&OPOV)r[OPOV.n]=OPOV.v;
+  return r;
+}
+function chips(){
+  fillSlide();
+  $('ch').innerHTML=[...new Set(E.map(e=>e.n))].sort((a,b)=>a-b).map(n=>`<label><input type="checkbox" value="${n}" checked>${n}</label>`).join('');
+  document.querySelectorAll('#ch input').forEach(i=>i.oninput=render);
+}
+function render(){
+  opFrame();
+  const fs=+$('fs').value,sw=$('sw').value,col=$('col').value,da=$('da').value,lab=$('lab').checked,pc=$('pc').value;
+  const swn=+sw;RC=FL==2?'#2e9e44':'#d62828';GC=FL==2?'#d62828':'#2e9e44';OC=HD||AT?'#000':FL?GC:'#888';OW=FL?swn/2:1.5;
+  const rr=AT?+$('L').value/2:Math.min(+$('rr').value,+$('L').value/2),pr=prog(),pts=[],sm={};
+  E.forEach(e=>{const v=pr[e.n]||0;sm[P.indexOf(e.a.p)+':'+e.a.s]=v;sm[P.indexOf(e.b.p)+':'+e.b.s]=v;});
+  const act=E.filter(e=>pr[e.n]>0);
+  E.forEach(e=>{e.tw=-1;});
+  if(Object.keys(TW).length){
+    const PL=E.map(e=>polyOf(curve(e)));
+    E.forEach((e,i)=>{if(!TW[e.n])return;
+      const o=[];PL.forEach((q,j)=>{if(j!==i)o.push(q[0],q[1]);});
+      e.tw=crossN(PL[i][0],o)<crossN(PL[i][1],o)?0:1; // менше перетинів; при рівності — півстрічка b (не з боку номера)
+    });
+  }
+  const K=AT?atomK(pr):null,layers=[];
+  SLIDE=null;
+  HL=null;
+  if(HD){const sp0=slidePlan(pr);HL=sp0;if(sp0)SLIDE=footAt(sp0,+$('sl').value);}
+  let s='';
+  P.forEach((p,i)=>{
+    const s0=s;s='';
+    const vs=verts(p),m=p.m,inn=[],out=[],cen=[],Rr=rr*Math.tan((m-2)*PI/(2*m));pts.push(...vs); // rr — довжина дотичної до кута; радіус дуги Rr
+    for(let k=0;k<m;k++){ // закруглюємо лише кути, що не належать сторонам-парам
+      const v=vs[k],k1=(k+1)%m;inn[k]=out[k]=v;
+      if(rr>0&&!((i+':'+k) in sm)&&!((i+':'+k1) in sm)){
+        const e1=nz(v,vs[(k-1+m)%m]),e2=nz(v,vs[k1]),f=(m-2)*PI/m,q=rr,bl=Math.hypot(e1[0]+e2[0],e1[1]+e2[1])||1,kk=Rr/Math.sin(f/2);
+        inn[k]=[v[0]+e1[0]*q,v[1]+e1[1]*q];out[k]=[v[0]+e2[0]*q,v[1]+e2[1]*q];
+        cen[k]=[v[0]+(e1[0]+e2[0])/bl*kk,v[1]+(e1[1]+e2[1])/bl*kk];
+      }
+    }
+    let f='M'+q2(out[m-1]),st='';
+    for(let j=0;j<m;j++){
+      f+='L'+q2(inn[j]);
+      if(!(sm[i+':'+j]>0))st+='M'+q2(out[(j-1+m)%m])+'L'+q2(inn[j]);
+      if(cen[j]){const a=`A${Rr} ${Rr} 0 0 ${sgn(inn[j],cen[j],out[j])} ${q2(out[j])}`;f+=a;st+='M'+q2(inn[j])+a;}
+    }
+    if(!HD)s+=`<path data-p="${i}" d="${f}Z" fill="${pc}" stroke="none" style="cursor:grab"/>`;
+    if(!HD)s+=`<path d="${st}" fill="none" stroke="${OC}" stroke-width="${OW}" pointer-events="none"/>`;
+    if(AT){ // дірка в центрі та чорні криві рівня (в шарі багатокутника)
+      s+=`<circle cx="${p.c[0]}" cy="${p.c[1]}" r="${holeR(p)}" fill="#fff" stroke="${OC}" stroke-width="${OW}" pointer-events="none"/>`;
+      K.top.forEach(tp=>{if(tp.pi===i)s+=`<path d="${tp.d}" fill="none" stroke="#000" stroke-width="${swn}" pointer-events="none"/>`;});
+    }
+    if(HD||AT){}else if(!FL)s+=`<circle class="ui" cx="${p.c[0]}" cy="${p.c[1]}" r="4" fill="#888" pointer-events="none"/>`;
+    else for(let j=0;j<m;j++)if(!(sm[i+':'+j]>0)){const a=sp(p,j); // регулярні траєкторії до середин неприклеєних сторін
+      s+=`<path d="M${q2(p.c)}L${q2([a.x,a.y])}" fill="none" stroke="#1d4ed8" stroke-width="${swn/2}" pointer-events="none"/>`+midArrow([p.c,[a.x,a.y]],4+1.2*swn,'#1d4ed8',FL==2?-1:1);}
+    layers.push({k:p.key+rz(p,null),s:fade(s,p)});s=s0;
+  });
+  act.forEach(e=>[[e.a,0],[e.b,1]].forEach(([o,h])=>{
+    const s0=s;s='';
+    const F=finger(o.p,o.s,e,h,pr[e.n],e.tw===h),p=o.p,m=p.m,vs=verts(p);
+    if(!F.c.length){s=s0;return;}
+    pts.push(...F.c);
+    const d=F.c.map((v,k)=>(k?'L':'M')+q2(v)).join('');
+    const cap=!(HD&&pr[e.n]>=.999); // у розкладі на ручки під швом лінії немає
+    const fbp=F.Fb.map((v,k)=>(k?'L':'M')+q2(v)).join(''),fap=F.Fa.map((v,k)=>(k?'L':'M')+q2(v)).join('');
+    const ln=e.tw===h?gapPath(F.Fa,F.pos,F.zc-2.2,F.zc+2.2)+fbp+(cap?'L'+q2(F.Fa[F.Fa.length-1]):''):(cap?d:fap+fbp);
+    s+=`<path d="${d}Z" fill="${pc}" stroke="none" pointer-events="none"/><path d="${ln}" fill="none" stroke="${OC}" stroke-width="${OW}" pointer-events="none"/>`;
+    if(rr>0&&!HD){
+      const ia=(o.s-1+m)%m,ib=o.s%m;
+      s+=patch(vs[ia],nz(vs[ia],vs[(ia-1+m)%m]),F.Fa,rr,pc);
+      s+=patch(vs[ib],nz(vs[ib],vs[(ib+1)%m]),F.Fb,rr,pc);
+    }
+    if(FL&&pr[e.n]>=.999)s+=flow(o,h,e,AT?swn/2:swn);
+    if(K)K.rays.forEach(r=>{if(r.e===e&&r.h===h)s+=`<path d="${r.d}" fill="none" stroke="#000" stroke-width="${swn}" stroke-linejoin="round" pointer-events="none"/>`;});
+    if(HL&&e===HL.ex&&h===HL.hx)s+=`<path d="${stripPts(F,o,HL.sJ).map((v,k)=>(k?'L':'M')+q2(v)).join('')}Z" fill="${lighten(pc,.5)}" fill-opacity=".75" stroke="none" pointer-events="none"/>`;
+    layers.push({k:(SLIDE&&SLIDE.e===e?(SLIDE.h===h?-1e9:-1e9+1):(h?e.kb:e.ka))+rz(null,e),s});s=s0;
+  }));
+  if(HD)P.forEach((p,i)=>{ // круги через вершини, чорна точка в центрі, номер круга синім
+    const s0=s;s='';
+    const R=rad(p),cc=cen(p);
+    pts.push([cc[0]-R,cc[1]-R],[cc[0]+R,cc[1]+R]);
+    s+=`<circle data-p="${i}" cx="${cc[0]}" cy="${cc[1]}" r="${R}" fill="${pc}" stroke="${OC}" stroke-width="${OW}" style="cursor:grab"/>`;
+    s+=`<circle cx="${cc[0]}" cy="${cc[1]}" r="${(4+swn*1.2)/2}" fill="#000" pointer-events="none"/>`;
+    if(lab)s+=`<text x="${cc[0]+(4+swn*1.2)/2+4}" y="${cc[1]}" font-size="${fs}" fill="#1d4ed8" dy=".35em" pointer-events="none">${i+1}</text>`;
+    // круг лежить трохи вище власних ручок, тому вони не перекривають його дугу
+    const kk=Math.max(p.key,...act.flatMap(e=>[e.a.p===p?e.ka:-1e9,e.b.p===p?e.kb:-1e9]))+.25;
+    layers.push({k:kk+rz(p,null),s:fade(s,p)});s=s0;
+  });
+  layers.sort((a,b)=>a.k-b.k).forEach(l=>{s+=l.s;}); // порядок накладання за висотами
+  E.forEach(e=>{const c=curve(e);pts.push(c.M);if(pr[e.n]>0||FL)return;
+    s+=`<path d="${HD?clipD([...Array.from({length:41},(_,i)=>bez(c.S1,i/40)),...Array.from({length:41},(_,i)=>bez(c.S2,i/40))],1):c.d}" fill="none" stroke="${col}" stroke-width="${sw}"${da?` stroke-dasharray="${da}"`:''} pointer-events="none"/>`;});
+  if(FL&&!HD&&!AT)P.forEach(p=>{s+=`<circle cx="${p.c[0]}" cy="${p.c[1]}" r="${4+swn*1.2}" fill="${RC}" pointer-events="none"/>`;});
+  if(lab){
+    P.forEach((p,pi)=>p.w.forEach((n,i)=>{
+      if(HD||AT||sm[pi+':'+p.pos[i]]>0)return;
+      const a=p.rot+2*PI*p.pos[i]/p.m,r=rad(p)*Math.cos(PI/p.m)-fs;
+      s+=`<text x="${p.c[0]+r*Math.cos(a)}" y="${p.c[1]-r*Math.sin(a)}" font-size="${fs}" fill="#333" text-anchor="middle" dy=".35em" pointer-events="none">${n}</text>`;
+    }));
+    act.forEach(e=>{ // номер біля шва, з боку першого елемента пари (e.a)
+      if(pr[e.n]<.999||(CONS&&CONS.e===e&&CONS.dcons>=CONS.Lhp))return;
+      const c=curve(e),d=nz(c.S1[2],c.M);
+      s+=`<text x="${c.M[0]-fs*1.1*(d[0]+d[1])}" y="${c.M[1]-fs*1.1*(d[1]-d[0])}" font-size="${fs}" fill="#333" text-anchor="middle" dy=".35em" pointer-events="none">${e.n}</text>`;
+    });
+  }
+  E.forEach((e,i)=>{if(FL&&!(pr[e.n]>=.999))return;if(CONS&&CONS.e===e&&CONS.dcons>=CONS.Lhp)return;const M=curve(e).M;
+    s+=`<circle class="${FL?'':'ui'}" data-e="${i}" cx="${M[0]}" cy="${M[1]}" r="${FL?4+swn*1.2:6}" fill="${FL?'#000':'#fff'}" stroke="${FL?'none':col}" stroke-width="2" style="cursor:move"/>`;});
+  svg.innerHTML=s;
+  SLIDE=null;
+  if(pts.length){
+    const xs=pts.map(v=>v[0]),ys=pts.map(v=>v[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+    const m=.1*Math.max(x1-x0,y1-y0,50);
+    svg.setAttribute('viewBox',`${x0-m} ${y0-m} ${x1-x0+2*m} ${y1-y0+2*m}`);
+  }
+}
+function fit(){render();}
+let anim=0,last=0;
+function tick(ts){
+  if(!anim)return;
+  const v=Math.min(1,+$('tt').value+(ts-last)/4000);last=ts;
+  $('tt').value=v;render();
+  if(v>=1){anim=0;$('pl').textContent='▶';return;}
+  requestAnimationFrame(tick);
+}
+$('pl').onclick=()=>{
+  if(anim){anim=0;$('pl').textContent='▶';return;}
+  if(+$('tt').value>=1)$('tt').value=0;
+  anim=1;$('pl').textContent='❚❚';last=performance.now();requestAnimationFrame(tick);
+};
+const xy=ev=>{const q=svg.createSVGPoint();q.x=ev.clientX;q.y=ev.clientY;const r=q.matrixTransform(svg.getScreenCTM().inverse());return[r.x,r.y];};
+svg.onpointerdown=ev=>{
+  const t=ev.target,pt=xy(ev);
+  if(keysDown.has('KeyS')||keysDown.has('KeyR')){pickSlide(pt);return;}
+  if(t.dataset.e!==undefined)drag={k:'n',e:E[+t.dataset.e],pt};
+  else if(t.dataset.p!==undefined){
+    const p=P[+t.dataset.p];
+    drag={k:Math.hypot(pt[0]-p.c[0],pt[1]-p.c[1])<.35*rad(p)?'m':'r',p,pt};
+  }else return;
+  svg.setPointerCapture(ev.pointerId);
+};
+svg.onpointermove=ev=>{
+  if(!drag)return;
+  const q=xy(ev),p=drag.p,dx=q[0]-drag.pt[0],dy=q[1]-drag.pt[1];
+  if(drag.k==='n'){drag.e.off[0]+=dx;drag.e.off[1]+=dy;}
+  else if(drag.k==='m'){p.c[0]+=dx;p.c[1]+=dy;}
+  else{
+    const ang=v=>Math.atan2(-(v[1]-p.c[1]),v[0]-p.c[0]);
+    p.rot+=ang(q)-ang(drag.pt);
+  }
+  render();drag.pt=xy(ev);
+};
+svg.onpointerup=svg.onpointercancel=()=>{drag=null;};
+['code','ex'].forEach(i=>$(i).oninput=()=>{parse();render();});
+$('d').oninput=()=>{layout();render();};
+['L','T','sw','col','da','lab','mode','tt','pc','rr','dh','sd','sl','fs'].forEach(i=>$(i).oninput=render);
+$('L').oninput=()=>{$('rr').max=$('L').value/2;render();};
+$('bl').onclick=()=>{layout(2000);render();};
+$('bf').onclick=()=>{fit();render();};
+const keysDown=new Set();
+if(typeof window!=='undefined'){
+  window.addEventListener('keydown',ev=>{keysDown.add(ev.code);});
+  window.addEventListener('keyup',ev=>{keysDown.delete(ev.code);});
+  window.addEventListener('blur',()=>keysDown.clear());
+}
+let sAnim=0,sLast=0;
+function sTick(ts){
+  if(!sAnim)return;
+  const v=Math.min(1,+$('sl').value+(ts-sLast)/6000);sLast=ts;$('sl').value=v;render();
+  if(v>=1){sAnim=0;$('sp').textContent='▶';if(GROW){finalizeGrow();render();}return;}
+  requestAnimationFrame(sTick);
+}
+$('sp').onclick=()=>{
+  reselC01();
+  const kind=$('op').value;
+  if(!$('sh').value&&!GROW)return;
+  if(sAnim){sAnim=0;$('sp').textContent='▶';return;}
+  if(!HD){HD=1;AT=0;$('at').style.fontWeight='';$('hd').style.fontWeight='700';anim=0;$('pl').textContent='▶';$('tt').value=1;if(!FL){FL=1;$('fl').style.fontWeight='700';flLabel();}}
+  if(!GROW){
+    if(kind==='b01'||kind==='b12'){if(!applyBirth(kind,true))return;}
+    else if(kind==='c01'&&!planC01(prog(true)))return;
+    else if(kind==='c12'&&!canC12(E[+$('sh').value.split(':')[0]]))return;
+  }
+  if(+$('sl').value>=1)$('sl').value=0;
+  sAnim=1;$('sp').textContent='❚❚';sLast=performance.now();requestAnimationFrame(sTick);
+};
+$('sa').onclick=()=>{
+  reselC01();
+  sAnim=0;$('sp').textContent='▶';
+  if(GROW)finalizeGrow();
+  const kind=$('op').value;
+  if(kind==='slide')applySlide();else if(kind==='c01')applyC01();else if(kind==='c12')applyC12();else applyBirth(kind,false);
+};
+function reselC01(){ // 0-1 скорочення: перевибираємо півручку, з якої починається рух (круг з однією ручкою)
+  const v=$('sh').value;if($('op').value!=='c01'||!v)return;
+  const [ei,h]=v.split(':').map(Number),e=E[ei];if(!e)return;
+  const o=h?e.b:e.a,ob=h?e.a:e.b;
+  if(o.p!==ob.p&&o.p.w.length!==1&&ob.p.w.length===1)$('sh').value=ei+':'+(1-h);
+}
+const selChanged=()=>{reselC01();sAnim=0;$('sp').textContent='▶';if(GROW)finalizeGrow();restoreBase();$('sl').value=0;render();};
+$('op').oninput=selChanged;$('sh').oninput=selChanged;
+$('at').onclick=()=>{
+  AT=!AT;$('at').style.fontWeight=AT?'700':'';
+  if(AT){HD=0;$('hd').style.fontWeight='';anim=0;$('pl').textContent='▶';$('tt').value=1;if(!FL){FL=1;$('fl').style.fontWeight='700';}}
+  render();
+};
+$('hd').onclick=()=>{
+  HD=!HD;$('hd').style.fontWeight=HD?'700':'';if(HD){AT=0;$('at').style.fontWeight='';}
+  if(HD){anim=0;$('pl').textContent='▶';$('tt').value=1;if(!FL){FL=1;$('fl').style.fontWeight='700';}}
+  render();
+};
+$('fl').onclick=()=>{FL=(FL+1)%3;$('fl').style.fontWeight=FL?'700':'';flLabel();if(FL){anim=0;$('pl').textContent='▶';$('tt').value=1;}render();};
+$('bs').onclick=async()=>{ // збереження SVG: у опублікованій сторінці — через можливість downloads (з підтвердженням глядача)
+  const c=svg.cloneNode(true);c.querySelectorAll('.ui').forEach(n=>n.remove());
+  c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const vb=svg.getAttribute('viewBox').split(/\s+/).map(Number);
+  c.setAttribute('width',vb[2].toFixed(0));c.setAttribute('height',vb[3].toFixed(0));
+  c.insertAdjacentHTML('afterbegin',`<rect x="${vb[0]}" y="${vb[1]}" width="${vb[2]}" height="${vb[3]}" fill="#fff"/>`);
+  const txt='<?xml version="1.0" encoding="UTF-8"?>\n'+c.outerHTML;
+  let dl=null;try{dl=window.claude?await window.claude.use('downloads'):null;}catch(e){}
+  if(dl){try{await dl.save({filename:'unfolding.svg',data:txt});}catch(e){}return;}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:'image/svg+xml'}));
+  a.download='unfolding.svg';a.click();
+};
+$('lg').onchange=()=>{setLang($('lg').value);try{localStorage.setItem('lg',$('lg').value);}catch(e){}};
+let l0='uk';try{l0=localStorage.getItem('lg')||'uk';}catch(e){}
+$('lg').value=l0;setLang(l0);
+parse();render();
+</script></body></html>
